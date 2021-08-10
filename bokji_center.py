@@ -1,17 +1,14 @@
-# 분류별 검색 > 장애인 복지 검색결과 데이터 크롤링
 # 크롤링을 위한 모듈 import
 from selenium import webdriver
 import time
 import pandas as pd
 
-#w = pd.ExcelWriter('./bokji_center.xlsx') # 'bokji_center'라는 파일명으로 엑셀 파일 작성 예정
 path = 'D:/Workspace/bokzip/크롤링/chromedriver.exe' # 크롬 드라이버 경로 (절대 or 상대 경로 상관 없음)
 driver = webdriver.Chrome(path)
-url = 'http://bokjiro.go.kr/welInfo/retrieveWelInfoBoxList.do' # 크롤링할 페이지의 url
+url = 'http://bokjiro.go.kr/welInfo/retrieveWelInfoBoxList.do' # # 크롤링할 페이지의 url
 driver.get(url) # url로 이동
 time.sleep(1) # 페이지 로딩 시간 기다리기
 
-# db 컬럼명과 동일, db에 없는 컬럼은 새로 추가해야할 컬럼
 titles = [] # 타이틀
 categories = [] # 생활, 고용, 건강, 교육 분야에 해당
 urls = [] # 상세 페이지 url
@@ -20,7 +17,6 @@ criterias = [] # 선정 기준
 contents = [] # 서비스 내용
 howToApply = [] # 신청 방법
 contacts = [] # 문의
-sites = [] # 사이트
 
 # 장애인 버튼 클릭
 driver.find_element_by_xpath(f'//*[@id="catCenterColor"]/li[1]/a').click()
@@ -38,7 +34,7 @@ for category in range(28,32):
     time.sleep(1)
     
     # 확인 버튼 클릭
-    driver.find_element_by_xpath(f'//*[@id="contents"]/div[3]/div[2]/div[2]/fieldset/a/span')click()
+    driver.find_element_by_xpath(f'//*[@id="contents"]/div[3]/div[2]/div[2]/fieldset/a/span').click()
     time.sleep(2)
     
     # 복지 정보 가져오기
@@ -52,41 +48,15 @@ for category in range(28,32):
             categories.append(category_name) # 위에서 저장한 category명을 저장
             urls.append(driver.current_url) # 상세 페이지 url을 저장
             
-            # 상세 내용 읽기, 데이터 없는 경우 예외처리(None값 넣기)
-            # 지원 대상 (target)
-            try:
-                targets.append(driver.find_element_by_xpath('//*[@id="backup"]/div[1]/div/ul/li[1]/ul').text)
-            except:
-                targets.append(None)     
-            # 선정기준 
-            try:
-                criterias.append(driver.find_element_by_xpath('//*[@id="backup"]/div[1]/div/ul/li[2]/ul').text)
-            except:
-                criterias.append(None)
-            # 지원내용 (content)
-            try:
-                contents.append(driver.find_element_by_xpath('//*[@id="backup"]/div[2]/div/ul/li/ul').text)
-            except:
-                contents.append(None)
-            # 신청방법 (howToApply)
-            try:
-                howToApply.append(driver.find_element_by_xpath('//*[@id="backup"]/div[3]/div/ul[1]/li[1]/ul').text)
-            except:
-                howToApply.append(None)  
-            # 문의처 (contact)
-            try:
-                contacts.append(driver.find_element_by_xpath('//*[@id="contents"]/div[4]/div[2]/div/div/ul/li[1]/ul').text)
-            except:
-                contacts.append(None)
-            # 관련사이트 (site)
-            try:
-                sites.append(driver.find_element_by_xpath('//*[@id="contents"]/div[4]/div[2]/div/div/ul/li[2]/ul').text)
-            except:
-                sites.append(None)  
+            # 상세 내용 읽기
+            targets.append(driver.find_element_by_xpath('//*[@id="backup"]/div[1]/div/ul/li[1]/ul').text) # 지원 대상 (target)
+            criterias.append(driver.find_element_by_xpath('//*[@id="backup"]/div[1]/div/ul/li[2]/ul').text) # 선정기준
+            contents.append(driver.find_element_by_xpath('//*[@id="backup"]/div[2]/div/ul/li/ul').text) # 지원내용 (content)
+            howToApply.append(driver.find_element_by_xpath('//*[@id="backup"]/div[3]/div/ul[1]/li[1]/ul').text) # 신청방법 (howToApply)
+            contacts.append(driver.find_element_by_xpath('//*[@id="contents"]/div[4]/div[2]/div/div/ul/li[1]/ul').text.replace('☎', '')) # 문의처 (contact)
             
             time.sleep(2)
             driver.back() # 뒤로 가기
-            
         except:
             break
 
@@ -97,15 +67,12 @@ df = pd.DataFrame(
      'qpplyUrl' : urls,
      'target' : targets,
      'criteria' : criterias,
-     'content' : contents,
+     'description' : contents,
      'howToApply' : howToApply,
-     'contact' : contacts,  
-     'site' : sites},
+     'contact' : contacts,}
     )
     
-# 카테고리명으로 시트명 지정(카테고리별로 시트를 구분 위함)해서 수집한 데이터(df)를 엑셀에 저장하기
-df.to_csv('bokji_center.csv', encoding='cp949')
-# df.to_excel(w)
+# 수집한 데이터(df)를 엑셀에 저장, 카테고리명으로 시트명 지정(카테고리별로 시트를 구분 위함) 
+df.to_csv('bokji_center.csv', encoding='utf-8-sig')
 time.sleep(1)
 driver.quit() # 크롬 창 끄기
-#w.save() #엑셀에 데이터 저장
