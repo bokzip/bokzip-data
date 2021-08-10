@@ -1,4 +1,3 @@
-# unsplash에서 썸네일 이미지 크롤링
 # 크롤링을 위한 모듈 import
 from selenium import webdriver
 import time
@@ -9,26 +8,19 @@ from selenium.webdriver.common.keys import Keys # 크롤링 중 자동 스크롤
 def readImgUrl(n,col):
     urls = []
     for i in range(1, n): # 1~ n-1까지 반복
-        #success = False
         try: # 이미지 태그에서 src 속성값(이미지 url) 읽기
             d = driver.find_element_by_xpath(f'//*[@id="app"]/div/div[2]/div[3]/div/div[1]/div/div/div[{col}]/figure[{i}]/div/div[1]/div/div/a/div/div[2]/div/img').get_attribute("src")
             urls.append(d);
-            #success = True
-            scrollPage() # 태그 하나 읽고 스크롤 내리기
+            driver.find_element_by_tag_name('body').send_keys(Keys.PAGE_DOWN) # 태그 하나 읽고 스크롤 내리기
             time.sleep(1) # 페이지 로딩 시간 기다리기
         except: # 예외 발생 시 현재 이미지 태그 건너뛰기
             continue
-            #print(col, 'i : ', i, ', ', success)
     
     return urls
-
-# 스크롤 내리기
-def scrollPage(): 
-    driver.find_element_by_tag_name('body').send_keys(Keys.PAGE_DOWN)
  
 # 메인
 if __name__=="__main__":
-    w = pd.ExcelWriter('./thumbnail.xlsx') # 'thumbnail'이라는 파일명으로 엑셀 파일 작성 예정
+    w = pd.ExcelWriter('./thumbnail.xlsx') # '썸네일'이라는 파일명으로 엑셀 파일 작성 예정
     path = 'D:/Workspace/bokzip/크롤링/chromedriver.exe' # 크롬 드라이버 경로 (절대 or 상대 경로 상관 없음)
     driver = webdriver.Chrome(path)
     driver.maximize_window() # 창 최대화
@@ -45,7 +37,7 @@ if __name__=="__main__":
             driver.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.HOME) # 맨위로 스크롤 (다시 처음으로)
             urls += readImgUrl(51,3) # 3번컬럼에서 이미지 50개 읽기
         else: # 그외의 키워드는 지자체(지역별) 지원에 해당하는 썸네일로 간주, 한 키워드당 총 375개의 이미지 읽기, 마찬가지로 예외(보여지는 화면에서 태그의 부재)발생으로 인해 대략 330개를 가져옴
-            scrollPage()
+            driver.find_element_by_tag_name('body').send_keys(Keys.PAGE_DOWN) # 스크롤 내리기
             urls = readImgUrl(126,1) # 1번컬럼에서 이미지 125개 읽어오기
             driver.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.HOME)
             
